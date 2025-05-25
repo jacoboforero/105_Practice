@@ -14,11 +14,8 @@
         --correct-bg: #c8e6c9;
         --wrong-bg: #ffcdd2;
       }
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
+      * { box-sizing: border-box; }
+      html, body {
         margin: 0;
         padding: 0;
         width: 100%;
@@ -36,7 +33,7 @@
       .card {
         background: var(--white);
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         padding: 30px;
         max-width: 450px;
         width: 100%;
@@ -64,13 +61,11 @@
         font-size: 1rem;
         cursor: pointer;
         transition: background 0.2s ease, transform 0.1s ease;
+        margin: 0 5px;
       }
-      button:hover {
-        background: var(--dark-green);
-      }
-      button:active {
-        transform: scale(0.98);
-      }
+      button:hover { background: var(--dark-green); }
+      button:active { transform: scale(0.98); }
+      button:disabled { opacity: 0.6; cursor: default; }
       #input-area {
         display: none;
         gap: 10px;
@@ -99,12 +94,8 @@
         margin-bottom: 20px;
         transition: background 0.3s ease;
       }
-      #feedback.correct {
-        background: var(--correct-bg);
-      }
-      #feedback.wrong {
-        background: var(--wrong-bg);
-      }
+      #feedback.correct { background: var(--correct-bg); }
+      #feedback.wrong   { background: var(--wrong-bg); }
       #score-board {
         display: none;
         background: #fafafa;
@@ -124,32 +115,14 @@
         flex-wrap: wrap;
         gap: 10px;
       }
-      .stats div {
-        min-width: 80px;
-        text-align: center;
-      }
-      /* Responsive adjustments */
+      .stats div { min-width: 80px; text-align: center; }
       @media (max-width: 600px) {
-        .card {
-          margin: 10px;
-          padding: 20px;
-        }
-        h2 {
-          font-size: 1.3rem;
-        }
-        #event {
-          font-size: 1.1rem;
-        }
-        button {
-          padding: 12px 20px;
-          font-size: 1.1rem;
-        }
-        #input-area label {
-          font-size: 1rem;
-        }
-        #input-area input {
-          font-size: 1rem;
-        }
+        .card { margin: 10px; padding: 20px; }
+        h2 { font-size: 1.3rem; }
+        #event { font-size: 1.1rem; }
+        button { padding: 12px 20px; font-size: 1.1rem; }
+        #input-area label { font-size: 1rem; }
+        #input-area input { font-size: 1rem; }
       }
     </style>
   </head>
@@ -159,6 +132,7 @@
       <div id="event">Click “Next” to begin</div>
       <div class="controls">
         <button id="next">Next shot</button>
+        <button id="reset">Reset</button>
       </div>
       <div id="input-area">
         <label>
@@ -187,98 +161,97 @@
       </div>
     </div>
     <script>
-      let scoreLeft = 0,
-        scoreRight = 0;
-      let streak = 0,
-        correct = 0,
-        attempts = 0;
-      let times = [],
-        startTime = 0;
+      let scoreLeft=0, scoreRight=0;
+      let streak=0, correct=0, attempts=0;
+      let times=[], startTime=0;
 
-      const nextBtn = document.getElementById("next");
-      const submitBtn = document.getElementById("submit");
-      const evtDiv = document.getElementById("event");
-      const inputArea = document.getElementById("input-area");
-      const feedback = document.getElementById("feedback");
-      const sbDiv = document.getElementById("score-board");
-      const sbLeft = document.getElementById("scoreLeft");
-      const sbRight = document.getElementById("scoreRight");
-      const streakEl = document.getElementById("streak");
-      const accEl = document.getElementById("accuracy");
-      const attEl = document.getElementById("attempts");
-      const lastEl = document.getElementById("lastTime");
-      const avgEl = document.getElementById("avgTime");
-      const ansLeft = document.getElementById("answerLeft");
-      const ansRight = document.getElementById("answerRight");
+      const nextBtn   = document.getElementById('next');
+      const resetBtn  = document.getElementById('reset');
+      const submitBtn = document.getElementById('submit');
+      const evtDiv    = document.getElementById('event');
+      const inputArea = document.getElementById('input-area');
+      const feedback  = document.getElementById('feedback');
+      const sbDiv     = document.getElementById('score-board');
+      const sbLeft    = document.getElementById('scoreLeft');
+      const sbRight   = document.getElementById('scoreRight');
+      const streakEl  = document.getElementById('streak');
+      const accEl     = document.getElementById('accuracy');
+      const attEl     = document.getElementById('attempts');
+      const lastEl    = document.getElementById('lastTime');
+      const avgEl     = document.getElementById('avgTime');
+      const ansLeft   = document.getElementById('answerLeft');
+      const ansRight  = document.getElementById('answerRight');
 
-      let lastType, lastPts, lastSide;
+      function resetGame() {
+        scoreLeft=0; scoreRight=0;
+        streak=0; correct=0; attempts=0;
+        times=[];
+        evtDiv.textContent = 'Click “Next” to begin';
+        inputArea.style.display='none';
+        sbDiv.style.display='none';
+        feedback.textContent=''; feedback.className='';
+        ansLeft.value=''; ansRight.value='';
+        streakEl.textContent='0'; accEl.textContent='0%';
+        attEl.textContent='0'; lastEl.textContent='0.00'; avgEl.textContent='0.00';
+        nextBtn.disabled=false; submitBtn.disabled=false;
+      }
+
+      resetBtn.onclick = resetGame;
+      // initialize
+      resetGame();
 
       nextBtn.onclick = () => {
         // weighted random pick
-        const r = Math.random();
-        if (r < 0.6) {
-          lastType = "Regular point";
-          lastPts = 1;
-        } else if (r < 0.8) {
-          lastType = "Groundstroke winner";
-          lastPts = 5;
-        } else if (r < 0.9) {
-          lastType = "Volley winner";
-          lastPts = 10;
-        } else {
-          lastType = "Overhead winner";
-          lastPts = 20;
-        }
+        const r=Math.random();
+        let lastType, lastPts;
+        if (r<0.6) { lastType='Regular point'; lastPts=1; }
+        else if (r<0.8) { lastType='Groundstroke winner'; lastPts=5; }
+        else if (r<0.9) { lastType='Volley winner'; lastPts=10; }
+        else { lastType='Overhead winner'; lastPts=20; }
 
-        lastSide = Math.random() < 0.5 ? "Left" : "Right";
-        if (lastSide === "Left") scoreLeft += lastPts;
-        else scoreRight += lastPts;
+        const lastSide = Math.random()<0.5?'Left':'Right';
+        if (lastSide==='Left') scoreLeft+=lastPts;
+        else scoreRight+=lastPts;
 
         evtDiv.textContent = `${lastType} → ${lastSide} team`;
         startTime = performance.now();
-
-        inputArea.style.display = "block";
-        sbDiv.style.display = "none";
-        feedback.textContent = "";
-        feedback.className = "";
-        ansLeft.value = "";
-        ansRight.value = "";
-        ansLeft.focus();
+        inputArea.style.display='block'; sbDiv.style.display='none';
+        feedback.textContent=''; feedback.className='';
+        ansLeft.value=''; ansRight.value=''; ansLeft.focus();
       };
 
       submitBtn.onclick = () => {
-        const valL = parseInt(ansLeft.value, 10);
-        const valR = parseInt(ansRight.value, 10);
-        const corrL = scoreLeft,
-          corrR = scoreRight;
+        const valL=parseInt(ansLeft.value,10);
+        const valR=parseInt(ansRight.value,10);
+        const corrL=scoreLeft, corrR=scoreRight;
 
-        const elapsed = (performance.now() - startTime) / 1000;
+        const elapsed=(performance.now()-startTime)/1000;
         times.push(elapsed);
-        const avg = times.reduce((a, b) => a + b, 0) / times.length;
-        lastEl.textContent = elapsed.toFixed(2);
-        avgEl.textContent = avg.toFixed(2);
+        const avg=times.reduce((a,b)=>a+b,0)/times.length;
+        lastEl.textContent=elapsed.toFixed(2);
+        avgEl.textContent=avg.toFixed(2);
 
-        attempts++;
-        attEl.textContent = attempts;
-
-        if (valL === corrL && valR === corrR) {
-          correct++;
-          streak++;
-          feedback.textContent = "✓ Correct";
-          feedback.className = "correct";
+        attempts++; attEl.textContent=attempts;
+        if (valL===corrL && valR===corrR) {
+          correct++; streak++;
+          feedback.textContent='✓ Correct'; feedback.className='correct';
         } else {
-          streak = 0;
-          feedback.textContent = `✗ Wrong (Left: ${corrL}, Right: ${corrR})`;
-          feedback.className = "wrong";
+          streak=0;
+          feedback.textContent=`✗ Wrong (Left: ${corrL}, Right: ${corrR})`;
+          feedback.className='wrong';
         }
+        const pct=attempts?Math.round(correct/attempts*100):0;
+        streakEl.textContent=streak; accEl.textContent=pct+'%';
+        sbLeft.textContent=scoreLeft; sbRight.textContent=scoreRight;
+        sbDiv.style.display='flex';
 
-        const pct = attempts ? Math.round((correct / attempts) * 100) : 0;
-        streakEl.textContent = streak;
-        accEl.textContent = pct + "%";
-
-        sbLeft.textContent = scoreLeft;
-        sbRight.textContent = scoreRight;
-        sbDiv.style.display = "flex";
+        // check for game end
+        if (scoreLeft>=105 || scoreRight>=105) {
+          const winner = scoreLeft>=105?'Left':'Right';
+          evtDiv.textContent = `${winner} team reached 105 – Game over`;
+          inputArea.style.display='none';
+          nextBtn.disabled=true; submitBtn.disabled=true;
+        }
       };
     </script>
   </body>
