@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>105 Practice</title>
     <style>
       :root {
@@ -16,8 +17,13 @@
       * {
         box-sizing: border-box;
       }
+      html,
       body {
         margin: 0;
+        padding: 0;
+        width: 100%;
+      }
+      body {
         padding: 20px;
         background: var(--light-green);
         color: var(--text);
@@ -122,6 +128,29 @@
         min-width: 80px;
         text-align: center;
       }
+      /* Responsive adjustments */
+      @media (max-width: 600px) {
+        .card {
+          margin: 10px;
+          padding: 20px;
+        }
+        h2 {
+          font-size: 1.3rem;
+        }
+        #event {
+          font-size: 1.1rem;
+        }
+        button {
+          padding: 12px 20px;
+          font-size: 1.1rem;
+        }
+        #input-area label {
+          font-size: 1rem;
+        }
+        #input-area input {
+          font-size: 1rem;
+        }
+      }
     </style>
   </head>
   <body>
@@ -158,12 +187,6 @@
       </div>
     </div>
     <script>
-      const ptsMap = {
-        "Regular point": 1,
-        "Groundstroke winner": 5,
-        "Volley winner": 10,
-        "Overhead winner": 20,
-      };
       let scoreLeft = 0,
         scoreRight = 0;
       let streak = 0,
@@ -189,19 +212,28 @@
       const ansRight = document.getElementById("answerRight");
 
       let lastType, lastPts, lastSide;
-      const types = Object.keys(ptsMap);
 
       nextBtn.onclick = () => {
-        // uniform random pick of type
-        const idx = Math.floor(Math.random() * types.length);
-        lastType = types[idx];
-        lastPts = ptsMap[lastType];
-        // random side
+        // weighted random pick
+        const r = Math.random();
+        if (r < 0.6) {
+          lastType = "Regular point";
+          lastPts = 1;
+        } else if (r < 0.8) {
+          lastType = "Groundstroke winner";
+          lastPts = 5;
+        } else if (r < 0.9) {
+          lastType = "Volley winner";
+          lastPts = 10;
+        } else {
+          lastType = "Overhead winner";
+          lastPts = 20;
+        }
+
         lastSide = Math.random() < 0.5 ? "Left" : "Right";
         if (lastSide === "Left") scoreLeft += lastPts;
         else scoreRight += lastPts;
 
-        // show event and start timer
         evtDiv.textContent = `${lastType} → ${lastSide} team`;
         startTime = performance.now();
 
@@ -220,7 +252,6 @@
         const corrL = scoreLeft,
           corrR = scoreRight;
 
-        // record time
         const elapsed = (performance.now() - startTime) / 1000;
         times.push(elapsed);
         const avg = times.reduce((a, b) => a + b, 0) / times.length;
@@ -229,6 +260,7 @@
 
         attempts++;
         attEl.textContent = attempts;
+
         if (valL === corrL && valR === corrR) {
           correct++;
           streak++;
@@ -239,6 +271,7 @@
           feedback.textContent = `✗ Wrong (Left: ${corrL}, Right: ${corrR})`;
           feedback.className = "wrong";
         }
+
         const pct = attempts ? Math.round((correct / attempts) * 100) : 0;
         streakEl.textContent = streak;
         accEl.textContent = pct + "%";
